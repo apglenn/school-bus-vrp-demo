@@ -4,20 +4,19 @@
 
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
+from matrix_generator import generate_distance_matrix
 
 # STEP 1: CREATE THE DATA
 def create_data_model():
-    """Stores the data for the problem."""
     data = {}
-    # Distance matrix in meters between 4 locations (Location 0 is Depot)
-    data["distance_matrix"] = [
-        [0, 548, 776, 696],  # From Location 0 (Depot) to others
-        [548, 0, 684, 308],  # From Location 1 to others
-        [776, 684, 0, 993],  # From Location 2 to others
-        [696, 308, 993, 0],  # From Location 3 to others
-    ]
-    data["num_vehicles"] = 2  # We have 2 buses
-    data["depot"] = 0         # All buses start and end at Location 0
+    matrix, demands = generate_distance_matrix("locations.csv")
+
+    data["distance_matrix"] = matrix
+    data["demands"] = demands
+    data["vehicle_capacities"] = [30, 30]
+    data["num_vehicles"] = 2
+    data["depot"] = 0
+
     return data
 
 # Main Solver Function
@@ -26,12 +25,19 @@ def main():
     data = create_data_model()
 
     # Create the routing index manager: (number of locations, number of vehicles, depot index)
-    manager = pywrapcp.RoutingIndexManager(
-        len(data["distance_matrix"]), data["num_vehicles"], data["depot"]
-    )
+    manager = pywrapcp.RoutingIndexManager(len(data["distance_matrix"]), data["num_vehicles"], data["depot"])
 
     # Create Routing Model.
     routing = pywrapcp.RoutingModel(manager)
+
+    def demand_callback(from_index):
+        from_node = manager.IndexToNode(from_index)
+        return data["demands"][from_node]
+
+    demand_callback_index = routing.RegisterUnaryTransitCallback(demand_callback)
+
+    routing.AddDimensionWithVehicleCapacity(demand_callback_index, 0, data["vehicle_capacities"], True, "Capacity")
+    capacity_dimension = routing.GetDimensionOrDie("Capacity")
 
     # Tell the solver how to calculate the distance between any two locations
     def distance_callback(from_index, to_index):
@@ -62,6 +68,7 @@ def main():
             plan_output = f"Route for Vehicle {vehicle_id}:\n"
             route_distance = 0
             while not routing.IsEnd(index):
+                solution.Value(capacity_dimension.CumulVar(index))
                 plan_output += f" Location {manager.IndexToNode(index)} -> "
                 previous_index = index
                 index = solution.Value(routing.NextVar(index))

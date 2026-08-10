@@ -1,6 +1,6 @@
 id,name,lat,lng,student_demand,is_depot
 0,Central Garage Depot,42.7284,-73.6918,0,1
-1,East Greenbush District Stop,42.5937,-73.7020,15,0
-2,Troy District Stop,42.7284,-73.6823,20,0
-3,Averill Park District Stop,42.6326,-73.5512,12,0
-4,Out-of-District Regional Academy,42.7400,-73.6700,0,0
+1,East Greenbush District Stop,42.5937,-73.7020,10,0
+2,Troy District Stop,42.7284,-73.6823,15,0
+3,Averill Park District Stop,42.6326,-73.5512,10,0
+4,Out-of-District Regional Academy,42.7400,-73.6700,5,0
