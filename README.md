@@ -1,4 +1,4 @@
-# Collaborative School Bus Vehicle Routing Model
+# School Bus Vehicle Routing Model
 
 A Python-based optimization project using Google OR-Tools to model and solve Capacitated Vehicle Routing Problems (CVRP) for school districts.
 

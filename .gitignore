@@ -1,3 +1,15 @@
-myenv/
+# Ignore virtual environment
+venv/
+.venv/
+
+# Ignore Python cache files
 __pycache__/
 *.pyc
+
+# Ignore VS Code / IDE settings
+.vscode/
+.idea/
+
+# Ignore OS junk files
+.DS_Store
+Thumbs.db
