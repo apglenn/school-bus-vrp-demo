@@ -5,32 +5,48 @@ def generate_distance_matrix(csv_path):
     # Read CSV data
     df = pd.read_csv(csv_path)
     coords = df[['lat', 'lng']].to_numpy()
-
-
     demands = df['student_demand'].tolist()
+    time_windows = list(zip(df['earliest_time'], df['latest_time']))
+
+
+
 
     # Calculate Euclidean distances scaled to a approximate meters (1 deg lat ~ 111,000 m)
     num_points = len(coords)
-    matrix = []
+    distance_matrix = []
+    time_matrix = []
+
+    meters_per_min = 600
+    boarding_time = 3
     
     for i in range(num_points):
-        row = []
+        dist_row = []
+        time_row = []
         for j in range(num_points):
             if i == j:
-                row.append(0)
+                dist_row.append(0)
+                time_row.append(0)
             else:
                 # Euclidean distance converted roughly to meters for simulation
                 lat_diff = (coords[i][0] - coords[j][0]) * 111000
                 lng_diff = (coords[i][1] - coords[j][1]) * 111000
                 dist = int(abs(lat_diff) + abs(lng_diff))
-                row.append(dist)
-        matrix.append(row)
+                travel_time = int(dist / meters_per_min) + boarding_time
+                dist_row.append(dist)
+                time_row.append(travel_time)
+        distance_matrix.append(dist_row)
+        time_matrix.append(time_row)
         
-    return matrix, demands
+    return distance_matrix, time_matrix, demands, time_windows
 
 if __name__ == "__main__":
-    matrix, demands = generate_distance_matrix("locations.csv")
+    distance_matrix, time_matrix, demands, time_windows = generate_distance_matrix("locations.csv")
     print("Generated Distance Matrix (Meters):")
-    for row in matrix:
+    for row in distance_matrix:
         print(row) 
 
+    print()
+
+    print("Generated Time matrix (Minutes):")
+    for row in time_matrix:
+        print(row)
