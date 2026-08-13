@@ -5,8 +5,9 @@
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 from matrix_generator import generate_distance_matrix
+from map_visualizer import generate_route_map
 
-# STEP 1: CREATE THE DATA
+# STEP 1: CREATE THE DATA       
 def create_data_model():
     data = {}
     distance_matrix, time_matrix, demands, time_windows = generate_distance_matrix("locations.csv")
@@ -83,20 +84,30 @@ def main():
     # Print results
     if solution:
         print(f"Objective: {solution.ObjectiveValue()} meters total distance\n")
+        routes_dict = {}
         for vehicle_id in range(data["num_vehicles"]):
             index = routing.Start(vehicle_id)
+            route_nodes = []
             plan_output = f"Route for Vehicle {vehicle_id}:\n"
             route_distance = 0
             while not routing.IsEnd(index):
+                node = manager.IndexToNode(index)
+                route_nodes.append(node)
+                load = solution.Value(capacity_dimension.CumulVar(index))
+                time_var = solution.Value(time_dimension.CumulVar(index))
                 plan_output += f" Location {manager.IndexToNode(index)} -> "
                 previous_index = index
                 index = solution.Value(routing.NextVar(index))
-                route_distance += routing.GetArcCostForVehicle(
-                    previous_index, index, vehicle_id
-                )
+                route_distance += routing.GetArcCostForVehicle(previous_index, index, vehicle_id)
+            node = manager.IndexToNode(index)
+            route_nodes.append(node)
+            routes_dict[vehicle_id] = route_nodes
+
+            time_val = solution.Value(time_dimension.CumulVar(index))
             plan_output += f"Location {manager.IndexToNode(index)}\n"
             plan_output += f"Distance of route: {route_distance}m\n"
             print(plan_output)
+        generate_route_map("locations.csv", routes_dict)
     else:
         status_code = routing.status()
         status_names = {
