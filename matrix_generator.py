@@ -4,13 +4,17 @@ import numpy as np
 def generate_distance_matrix(csv_path):
     # Read CSV data
     df = pd.read_csv(csv_path)
+    garage_node_by_district = {1: 0, 2: 2, 3: 4}
+    num_vehicles = 2
+    starts = []
+    ends = []
+    for key, value in garage_node_by_district.items():
+        for i in range(num_vehicles):
+            starts.append(value)
+    ends = starts.copy()
     coords = df[['lat', 'lng']].to_numpy()
     demands = df['student_demand'].tolist()
     time_windows = list(zip(df['earliest_time'], df['latest_time']))
-
-
-
-
     # Calculate Euclidean distances scaled to a approximate meters (1 deg lat ~ 111,000 m)
     num_points = len(coords)
     distance_matrix = []
@@ -37,10 +41,10 @@ def generate_distance_matrix(csv_path):
         distance_matrix.append(dist_row)
         time_matrix.append(time_row)
         
-    return distance_matrix, time_matrix, demands, time_windows
+    return starts, ends, distance_matrix, time_matrix, demands, time_windows
 
 if __name__ == "__main__":
-    distance_matrix, time_matrix, demands, time_windows = generate_distance_matrix("locations.csv")
+    starts, ends, distance_matrix, time_matrix, demands, time_windows = generate_distance_matrix("locations.csv")
     print("Generated Distance Matrix (Meters):")
     for row in distance_matrix:
         print(row) 

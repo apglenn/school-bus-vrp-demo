@@ -10,17 +10,18 @@ from map_visualizer import generate_route_map
 # STEP 1: CREATE THE DATA       
 def create_data_model():
     data = {}
-    distance_matrix, time_matrix, demands, time_windows = generate_distance_matrix("locations.csv")
+    starts, ends, distance_matrix, time_matrix, demands, time_windows = generate_distance_matrix("locations.csv")
 
     data["distance_matrix"] = distance_matrix
     data["time_matrix"] = time_matrix
     data["demands"] = demands
-    data["vehicle_capacities"] = [30, 30]
-    data["num_vehicles"] = 2
+    data["vehicle_capacities"] = [30]*len(starts)
+    data["num_vehicles"] = len(starts)
+    data["vehicle_starts"] = starts
+    data["vehicle_ends"] = ends
     data["max_wait_time"] = 15
     data["max_route_time"] = 120
     data["time_windows"] = time_windows
-    data["depot"] = 0
 
     return data
 
@@ -30,10 +31,12 @@ def main():
     data = create_data_model()
 
     # Create the routing index manager: (number of locations, number of vehicles, depot index)
-    manager = pywrapcp.RoutingIndexManager(len(data["distance_matrix"]), data["num_vehicles"], data["depot"])
-
+    manager = pywrapcp.RoutingIndexManager(len(data["distance_matrix"]), data["num_vehicles"], data["vehicle_starts"], data["vehicle_ends"])
     # Create Routing Model.
     routing = pywrapcp.RoutingModel(manager)
+    for v in range(data["num_vehicles"]):
+       print(f"Vehicle {v}: start_index={routing.Start(v)}, end_index={routing.End(v)}")
+    print(manager.NodeToIndex(0))
 
     def demand_callback(from_index):
         from_node = manager.IndexToNode(from_index)
@@ -43,7 +46,7 @@ def main():
 
     routing.AddDimensionWithVehicleCapacity(demand_callback_index, 0, data["vehicle_capacities"], True, "Capacity")
     capacity_dimension = routing.GetDimensionOrDie("Capacity")
-
+ 
     def time_callback(from_index, to_index):
         from_node = manager.IndexToNode(from_index)
         to_node = manager.IndexToNode(to_index)
