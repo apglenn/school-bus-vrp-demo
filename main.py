@@ -10,7 +10,7 @@ from map_visualizer import generate_route_map
 # STEP 1: CREATE THE DATA       
 def create_data_model():
     data = {}
-    starts, ends, distance_matrix, time_matrix, demands, time_windows = generate_distance_matrix("locations.csv")
+    starts, ends, distance_matrix, time_matrix, demands, time_windows, is_depot_list = generate_distance_matrix("locations.csv")
 
     data["distance_matrix"] = distance_matrix
     data["time_matrix"] = time_matrix
@@ -18,6 +18,7 @@ def create_data_model():
     data["vehicle_capacities"] = [30]*len(starts)
     data["num_vehicles"] = len(starts)
     data["vehicle_starts"] = starts
+    data["is_depot_list"] = is_depot_list
     data["vehicle_ends"] = ends
     data["max_wait_time"] = 15
     data["max_route_time"] = 120
@@ -34,9 +35,7 @@ def main():
     manager = pywrapcp.RoutingIndexManager(len(data["distance_matrix"]), data["num_vehicles"], data["vehicle_starts"], data["vehicle_ends"])
     # Create Routing Model.
     routing = pywrapcp.RoutingModel(manager)
-    for v in range(data["num_vehicles"]):
-       print(f"Vehicle {v}: start_index={routing.Start(v)}, end_index={routing.End(v)}")
-    print(manager.NodeToIndex(0))
+
 
     def demand_callback(from_index):
         from_node = manager.IndexToNode(from_index)
@@ -57,12 +56,20 @@ def main():
 
     time_dimension = routing.GetDimensionOrDie("Time")
 
+    # Part 1: time windows for regular stops only
     for node_index in range(len(data["distance_matrix"])):
+        if data["is_depot_list"][node_index] == 1:
+            continue  # garages handled separately below
         index = manager.NodeToIndex(node_index)
-
-        earliest_time = data["time_windows"][node_index][0]
-        latest_time = data["time_windows"][node_index][1]
+        earliest_time, latest_time = data["time_windows"][node_index]
         time_dimension.CumulVar(index).SetRange(earliest_time, latest_time)
+
+    # Part 2: time windows for garages, set per-vehicle
+    for vehicle_id in range(data["num_vehicles"]):
+        garage_node = data["vehicle_starts"][vehicle_id]
+        earliest_time, latest_time = data["time_windows"][garage_node]
+        time_dimension.CumulVar(routing.Start(vehicle_id)).SetRange(earliest_time, latest_time)
+        time_dimension.CumulVar(routing.End(vehicle_id)).SetRange(earliest_time, latest_time)
 
 
     # Tell the solver how to calculate the distance between any two locations
