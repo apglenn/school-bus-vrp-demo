@@ -87,11 +87,14 @@ def main():
     # Set search strategy (first solution heuristic)
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION
+    #search_parameters.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
+    #search_parameters.time_limit.FromSeconds(10)
 
     # Solve the problem
     solution = routing.SolveWithParameters(search_parameters)
 
     # Print results
+    load = 0
     if solution:
         print(f"Objective: {solution.ObjectiveValue()} meters total distance\n")
         routes_dict = {}
@@ -100,22 +103,22 @@ def main():
             route_nodes = []
             plan_output = f"Route for Vehicle {vehicle_id}:\n"
             route_distance = 0
+            route_load = 0
             while not routing.IsEnd(index):
                 node = manager.IndexToNode(index)
                 route_nodes.append(node)
-                load = solution.Value(capacity_dimension.CumulVar(index))
                 time_var = solution.Value(time_dimension.CumulVar(index))
-                plan_output += f" Location {manager.IndexToNode(index)} -> "
+                route_load += data["demands"][node]
+                plan_output += f" Location {node} Load({route_load}) -> "
                 previous_index = index
                 index = solution.Value(routing.NextVar(index))
                 route_distance += routing.GetArcCostForVehicle(previous_index, index, vehicle_id)
             node = manager.IndexToNode(index)
             route_nodes.append(node)
             routes_dict[vehicle_id] = route_nodes
-
-            time_val = solution.Value(time_dimension.CumulVar(index))
-            plan_output += f"Location {manager.IndexToNode(index)}\n"
+            plan_output += f"Location {manager.IndexToNode(index)} Load({route_load})\n"
             plan_output += f"Distance of route: {route_distance}m\n"
+            plan_output += f"Time: {time_var} mins\n"
             print(plan_output)
         generate_route_map("locations.csv", routes_dict)
     else:
