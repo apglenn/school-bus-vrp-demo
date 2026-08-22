@@ -10,7 +10,7 @@ from map_visualizer import generate_route_map
 # STEP 1: CREATE THE DATA       
 def create_data_model():
     data = {}
-    starts, ends, distance_matrix, time_matrix, demands, time_windows, is_depot_list = generate_distance_matrix("locations.csv")
+    district, starts, ends, distance_matrix, time_matrix, demands, time_windows, is_depot_list = generate_distance_matrix("locations.csv")
 
     data["distance_matrix"] = distance_matrix
     data["time_matrix"] = time_matrix
@@ -23,7 +23,7 @@ def create_data_model():
     data["max_wait_time"] = 15
     data["max_route_time"] = 120
     data["time_windows"] = time_windows
-
+    data['district'] = district
     return data
 
 # Main Solver Function
@@ -56,7 +56,7 @@ def main():
 
     time_dimension = routing.GetDimensionOrDie("Time")
 
-    # Part 1: time windows for regular stops only
+    # time windows for regular stops only
     for node_index in range(len(data["distance_matrix"])):
         if data["is_depot_list"][node_index] == 1:
             continue  # garages handled separately below
@@ -64,12 +64,26 @@ def main():
         earliest_time, latest_time = data["time_windows"][node_index]
         time_dimension.CumulVar(index).SetRange(earliest_time, latest_time)
 
-    # Part 2: time windows for garages, set per-vehicle
+    # time windows for garages, set per-vehicle
     for vehicle_id in range(data["num_vehicles"]):
         garage_node = data["vehicle_starts"][vehicle_id]
         earliest_time, latest_time = data["time_windows"][garage_node]
         time_dimension.CumulVar(routing.Start(vehicle_id)).SetRange(earliest_time, latest_time)
         time_dimension.CumulVar(routing.End(vehicle_id)).SetRange(earliest_time, latest_time)
+
+    # Independent Baseline
+    vehicles_per_district = int(data['num_vehicles']/max(data['district']))
+    for node_index in range(len(data["distance_matrix"])):
+        if data["is_depot_list"][node_index] == 1:
+            continue
+        index= manager.NodeToIndex(node_index)
+        district = data['district'][node_index]
+        start_vehicle = int((district - 1) * vehicles_per_district)
+        allowed_vehicles = list(range(start_vehicle, start_vehicle + vehicles_per_district))
+        routing.SetAllowedVehiclesForIndex(allowed_vehicles, index)
+
+
+    
 
 
     # Tell the solver how to calculate the distance between any two locations
@@ -109,7 +123,8 @@ def main():
                 route_nodes.append(node)
                 time_var = solution.Value(time_dimension.CumulVar(index))
                 route_load += data["demands"][node]
-                plan_output += f" Location {node} Load({route_load}) -> "
+                district = data['district'][node]
+                plan_output += f" Location {node} Load({route_load}) District {district} -> "
                 previous_index = index
                 index = solution.Value(routing.NextVar(index))
                 route_distance += routing.GetArcCostForVehicle(previous_index, index, vehicle_id)

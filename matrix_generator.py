@@ -14,6 +14,7 @@ def generate_distance_matrix(csv_path):
     ends = starts.copy()
     coords = df[['lat', 'lng']].to_numpy()
     demands = df['student_demand'].tolist()
+    district = df['district'].tolist()
     time_windows = list(zip(df['earliest_time'], df['latest_time']))
     # Calculate Euclidean distances scaled to a approximate meters (1 deg lat ~ 111,000 m)
     is_depot_list = df['is_depot'].tolist()
@@ -42,10 +43,10 @@ def generate_distance_matrix(csv_path):
         distance_matrix.append(dist_row)
         time_matrix.append(time_row)
         
-    return starts, ends, distance_matrix, time_matrix, demands, time_windows, is_depot_list
+    return district, starts, ends, distance_matrix, time_matrix, demands, time_windows, is_depot_list
 
 if __name__ == "__main__":
-    starts, ends, distance_matrix, time_matrix, demands, time_windows, is_depot_list = generate_distance_matrix("locations.csv")
+    district, starts, ends, distance_matrix, time_matrix, demands, time_windows, is_depot_list = generate_distance_matrix("locations.csv")
     print("Generated Distance Matrix (Meters):")
     for row in distance_matrix:
         print(row) 
