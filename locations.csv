@@ -1,10 +1,13 @@
 id,name,lat,lng,student_demand,is_depot,earliest_time,latest_time,district
 0,East Greenbush Garage,42.5900,-73.7050,0,1,0,120,1
-1,East Greenbush Stop A,42.5937,-73.7020,15,0,0,90,1
-2,Troy Garage,42.7284,-73.6823,0,1,0,120,2
-3,Troy Stop A,42.728370684863755, -73.67334336552575,12,0,0,90,2
-4,Averill Park Garage,42.6326,-73.5512,0,1,0,120,3
-5,Averill Park Stop A,42.63466756292956, -73.57070288458964,15,0,0,90,3
-6,Out-of-District Academy Stop (East Greenbush students),42.7400,-73.6700,4,0,0,90,1
-7,Out-of-District Academy Stop (Troy Students),42.7400,-73.6700,4,0,0,90,2
-8,Out-of-District Academy Stop (Averill Park Students),42.7400,-73.6700,4,0,0,90,3
+1,East Greenbush Stop A,42.5937,-73.7020,10,0,0,90,1
+2,East Greenbush Stop B,42.578849548585, -73.69728164925134,10,0,0,90,1
+3,Troy Garage,42.7284,-73.6823,0,1,0,120,2
+4,Troy Stop A,42.728370684863755, -73.67334336552575,10,0,0,90,2
+5,Troy Stop B,42.71775279141285, -73.69596606917584,10,0,0,90,2
+6,Averill Park Garage,42.6326,-73.5512,0,1,0,120,3
+7,Averill Park Stop A,42.63466756292956, -73.57070288458964,10,0,0,90,3
+8,Averill Park Stop B,42.64771513990002, -73.58406305926606,10,0,0,90,3
+9,Out-of-District Academy Stop (East Greenbush students),42.7400,-73.6700,2,0,0,90,1
+10,Out-of-District Academy Stop (Troy Students),42.7400,-73.6700,2,0,0,90,2
+11,Out-of-District Academy Stop (Averill Park Students),42.7400,-73.6700,2,0,0,90,3

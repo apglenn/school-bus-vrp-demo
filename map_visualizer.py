@@ -3,6 +3,7 @@ import folium
 import pandas as pd
 
 def generate_route_map(csv_path, routes_dict, output_html="route_map.html"):
+    
     df = pd.read_csv(csv_path)
     
     depot_lat, depot_lng = df.loc[0, 'lat'], df.loc[0, 'lng']

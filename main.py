@@ -8,14 +8,16 @@ from matrix_generator import generate_distance_matrix
 from map_visualizer import generate_route_map
 
 # STEP 1: CREATE THE DATA       
-def create_data_model():
+def create_data_model(collaborative):
     data = {}
-    district, starts, ends, distance_matrix, time_matrix, demands, time_windows, is_depot_list = generate_distance_matrix("locations.csv")
+    csv_path = "locations2.csv" if collaborative else "locations.csv"
+    data['csv_path'] = csv_path
+    district, starts, ends, distance_matrix, time_matrix, demands, time_windows, is_depot_list = generate_distance_matrix(csv_path)
 
     data["distance_matrix"] = distance_matrix
     data["time_matrix"] = time_matrix
     data["demands"] = demands
-    data["vehicle_capacities"] = [30]*len(starts)
+    data["vehicle_capacities"] = [16]*len(starts)
     data["num_vehicles"] = len(starts)
     data["vehicle_starts"] = starts
     data["is_depot_list"] = is_depot_list
@@ -26,10 +28,51 @@ def create_data_model():
     data['district'] = district
     return data
 
+def display_result(solution, data, manager, routing, time_dimension):
+        # Print results
+    if solution:
+        print(f"Objective: {solution.ObjectiveValue()} meters total distance\n")
+        routes_dict = {}
+        for vehicle_id in range(data["num_vehicles"]):
+            index = routing.Start(vehicle_id)
+            route_nodes = []
+            plan_output = f"Route for Vehicle {vehicle_id}:\n"
+            route_distance = 0
+            route_load = 0
+            while not routing.IsEnd(index):
+                node = manager.IndexToNode(index)
+                route_nodes.append(node)
+                time_var = solution.Value(time_dimension.CumulVar(index))
+                route_load += data["demands"][node]
+                plan_output += f" Location {node} Load({route_load}) -> "
+                previous_index = index
+                index = solution.Value(routing.NextVar(index))
+                route_distance += routing.GetArcCostForVehicle(previous_index, index, vehicle_id)
+            node = manager.IndexToNode(index)
+            route_nodes.append(node)
+            routes_dict[vehicle_id] = route_nodes
+            plan_output += f"Location {manager.IndexToNode(index)} Load({route_load})\n"
+            plan_output += f"Distance of route: {route_distance}m\n"
+            plan_output += f"Time: {time_var} mins\n"
+            print(plan_output)
+        generate_route_map(data["csv_path"], routes_dict)
+    else:
+        status_code = routing.status()
+        status_names = {
+            0: "ROUTING_NOT_SOLVED (Problem not solved yet)",
+            1: "ROUTING_SUCCESS (Found a solution)",
+            2: "ROUTING_FAIL (No solution exists that satisfies all constraints)",
+            3: "ROUTING_FAIL_TIMEOUT (Timed out before finding a solution)",
+            4: "ROUTING_INVALID (Model or constraints are invalid/contradictory)"
+        }
+        reason = status_names.get(status_code, f"Unknown Status Code: {status_code}")
+        print(f"No solution found! Reason: {reason}")
+
+
 # Main Solver Function
-def main():
+def main(collaborative):
     # Instantiate the data problem.
-    data = create_data_model()
+    data = create_data_model(collaborative)
 
     # Create the routing index manager: (number of locations, number of vehicles, depot index)
     manager = pywrapcp.RoutingIndexManager(len(data["distance_matrix"]), data["num_vehicles"], data["vehicle_starts"], data["vehicle_ends"])
@@ -72,15 +115,16 @@ def main():
         time_dimension.CumulVar(routing.End(vehicle_id)).SetRange(earliest_time, latest_time)
 
     # Independent Baseline
-    vehicles_per_district = int(data['num_vehicles']/max(data['district']))
-    for node_index in range(len(data["distance_matrix"])):
-        if data["is_depot_list"][node_index] == 1:
-            continue
-        index= manager.NodeToIndex(node_index)
-        district = data['district'][node_index]
-        start_vehicle = int((district - 1) * vehicles_per_district)
-        allowed_vehicles = list(range(start_vehicle, start_vehicle + vehicles_per_district))
-        routing.SetAllowedVehiclesForIndex(allowed_vehicles, index)
+    if not collaborative:
+        vehicles_per_district = int(data['num_vehicles']/max(data['district']))
+        for node_index in range(len(data["distance_matrix"])):
+            if data["is_depot_list"][node_index] == 1:
+                continue
+            index= manager.NodeToIndex(node_index)
+            district = data['district'][node_index]
+            start_vehicle = int((district - 1) * vehicles_per_district)
+            allowed_vehicles = list(range(start_vehicle, start_vehicle + vehicles_per_district))
+            routing.SetAllowedVehiclesForIndex(allowed_vehicles, index)
 
 
     
@@ -106,50 +150,14 @@ def main():
 
     # Solve the problem
     solution = routing.SolveWithParameters(search_parameters)
+    return solution, data, manager, routing, time_dimension
 
-    # Print results
-    load = 0
-    if solution:
-        print(f"Objective: {solution.ObjectiveValue()} meters total distance\n")
-        routes_dict = {}
-        for vehicle_id in range(data["num_vehicles"]):
-            index = routing.Start(vehicle_id)
-            route_nodes = []
-            plan_output = f"Route for Vehicle {vehicle_id}:\n"
-            route_distance = 0
-            route_load = 0
-            while not routing.IsEnd(index):
-                node = manager.IndexToNode(index)
-                route_nodes.append(node)
-                time_var = solution.Value(time_dimension.CumulVar(index))
-                route_load += data["demands"][node]
-                district = data['district'][node]
-                plan_output += f" Location {node} Load({route_load}) District {district} -> "
-                previous_index = index
-                index = solution.Value(routing.NextVar(index))
-                route_distance += routing.GetArcCostForVehicle(previous_index, index, vehicle_id)
-            node = manager.IndexToNode(index)
-            route_nodes.append(node)
-            routes_dict[vehicle_id] = route_nodes
-            plan_output += f"Location {manager.IndexToNode(index)} Load({route_load})\n"
-            plan_output += f"Distance of route: {route_distance}m\n"
-            plan_output += f"Time: {time_var} mins\n"
-            print(plan_output)
-        generate_route_map("locations.csv", routes_dict)
-    else:
-        status_code = routing.status()
-        status_names = {
-            0: "ROUTING_NOT_SOLVED (Problem not solved yet)",
-            1: "ROUTING_SUCCESS (Found a solution)",
-            2: "ROUTING_FAIL (No solution exists that satisfies all constraints)",
-            3: "ROUTING_FAIL_TIMEOUT (Timed out before finding a solution)",
-            4: "ROUTING_INVALID (Model or constraints are invalid/contradictory)"
-        }
-        reason = status_names.get(status_code, f"Unknown Status Code: {status_code}")
-        print(f"No solution found! Reason: {reason}")
 
 if __name__ == "__main__":
-    main()
+    collaborative = True
+    solution, data, manager, routing, time_dimension = main(collaborative)
+    display_result(solution, data, manager, routing, time_dimension)
+
 
 
 

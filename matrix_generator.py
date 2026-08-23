@@ -4,7 +4,8 @@ import numpy as np
 def generate_distance_matrix(csv_path):
     # Read CSV data
     df = pd.read_csv(csv_path)
-    garage_node_by_district = {1: 0, 2: 2, 3: 4}
+    garage_rows = df[df['is_depot'] == 1]
+    garage_node_by_district = dict(zip(garage_rows['district'], garage_rows.index))
     num_vehicles = 2
     starts = []
     ends = []
