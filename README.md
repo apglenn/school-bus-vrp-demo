@@ -10,5 +10,8 @@ A Python-based optimization project using Google OR-Tools to model and solve Cap
 ## How to Run
 1. Clone this repository.
 2. Activate virtual environment and install requirements:
-   `pip install ortools pandas numpy matplotlib folium`
+   `pip install "ortools==9.11.4210" pandas numpy matplotlib folium`
 3. Run `python main.py` 
+
+## Known Issues
+- OR-Tools versions 9.15 and higher currently have a broken Python binding for 'SetAllowedVehiclesForIndex'. Confirmed Via isolated reproduction against multiple OR-Tools versions.
