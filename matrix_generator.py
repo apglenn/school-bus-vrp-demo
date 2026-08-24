@@ -37,7 +37,7 @@ def generate_distance_matrix(csv_path):
                 # Euclidean distance converted roughly to meters for simulation
                 lat_diff = (coords[i][0] - coords[j][0]) * 111000
                 lng_diff = (coords[i][1] - coords[j][1]) * 111000
-                dist = int(abs(lat_diff) + abs(lng_diff))
+                dist = int((abs(lat_diff)**2 + abs(lng_diff)**2)**0.5)
                 travel_time = int(dist / meters_per_min) + boarding_time
                 dist_row.append(dist)
                 time_row.append(travel_time)

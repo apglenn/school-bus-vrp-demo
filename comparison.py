@@ -51,7 +51,7 @@ def computeDiff():
 
     # write to output file
     with open("output.txt", "w", encoding = "utf-8") as file:
-        file.write(f"Difference in distance: {dist_diff}%\n")
+        file.write(f"Difference in distance: {dist_diff}% decrease\n")
         file.write(f"The collaborative version had {falseRoutes-trueRoutes} less routes than the Independent verion\n")
 
 
