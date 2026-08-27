@@ -73,6 +73,12 @@ def display_result(solution, data, manager, routing, time_dimension):
 def main(collaborative):
     # Instantiate the data problem.
     data = create_data_model(collaborative)
+    print("distance_matrix[0]:", data["distance_matrix"][0])
+    print("distance_matrix[1]:", data["distance_matrix"][1])
+    print("shape:", len(data["distance_matrix"]), "x", len(data["distance_matrix"][0]))
+    for i, row in enumerate(data["distance_matrix"]):
+        print(i, row)
+    print("Running main.py from:", __file__)
 
     # Create the routing index manager: (number of locations, number of vehicles, depot index)
     manager = pywrapcp.RoutingIndexManager(len(data["distance_matrix"]), data["num_vehicles"], data["vehicle_starts"], data["vehicle_ends"])
@@ -131,11 +137,16 @@ def main(collaborative):
 
 
     # Tell the solver how to calculate the distance between any two locations
+    call_count = 0
     def distance_callback(from_index, to_index):
-        # Convert from solver internal index to matrix node index
+        nonlocal call_count
         from_node = manager.IndexToNode(from_index)
         to_node = manager.IndexToNode(to_index)
-        return data["distance_matrix"][from_node][to_node]
+        val = data["distance_matrix"][from_node][to_node]
+        call_count += 1
+        if call_count <= 8:
+            print(f"call {call_count}: from={from_node} to={to_node} val={val}")
+        return val
 
     transit_callback_index = routing.RegisterTransitCallback(distance_callback)
 
