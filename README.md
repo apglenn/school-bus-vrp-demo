@@ -67,9 +67,4 @@ coordinated (collaborative) approach, and measures the difference.
   distance)
 - Synthetic data generator for testing at multiple district counts/scales
 
-## Results
 
-*(Fill in your actual comparison numbers here once finalized — e.g.:
-"Collaborative routing reduced total distance by X% and required Y fewer
-vehicles compared to independent per-district routing, across N districts
-and M stops.")*
