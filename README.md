@@ -28,10 +28,16 @@ coordinated (collaborative) approach, and measures the difference.
 **Requires Python 3.12** (see Known Issues below).
 
 1. Clone this repository.
-2. Create and activate a virtual environment using Python 3.12: python3.12 -m venv myenv source myenv/bin/activate
-3. Install Dependencies: pip install "ortools==9.11.4210" pandas numpy folium requests
-4. Run a single scenario: python main.py  (toggle the `collaborative` flag at the bottom of `main.py`)
-5. Run the full comparison (both scenarios, generates both maps and `output.txt` with savings summary): python comparison.py
+2. Create and activate a virtual environment using Python 3.12:
+   - macOS/Linux/WSL:
+     python3.12 -m venv myenv
+     source myenv/bin/activate
+   - Windows (PowerShell):
+     py -3.12 -m venv myenv
+     myenv\Scripts\Activate.p
+4. Install Dependencies: pip install "ortools==9.11.4210" pandas numpy folium requests
+5. Run a single scenario: python main.py  (toggle the `collaborative` flag at the bottom of `main.py`)
+6. Run the full comparison (both scenarios, generates both maps and `output.txt` with savings summary): python comparison.py
 
 
 
@@ -46,10 +52,13 @@ coordinated (collaborative) approach, and measures the difference.
   `SetAllowedVehiclesForIndex` (raises a `TypeError` on `absl::Span<const int>`
   conversion even with correctly-typed native Python int lists — verified via
   isolated reproduction across multiple OR-Tools versions).
-- **Virtual environment activation:** Always `cd` into the project directory
-  *before* activating `myenv` — activating from another location can silently
-  pick up an unrelated environment of the same name. Verify with
-  `which python3` and `pip show ortools` before running anything.
+- **Virtual environment activation (WSL specifically):** If developing on
+  WSL with your project on a Windows-mounted drive (`/mnt/c/...`), always
+  `cd` into the project directory *before* activating `myenv` — activating
+  from another location can silently pick up an unrelated environment of
+  the same name. Verify with `which python3` and `pip show ortools` before
+  running anything. This is a WSL/DrvFs-specific quirk and shouldn't affect
+  native Linux, macOS, or Windows-only setups.
 - **Road-network distances (OSRM):** An initial integration using OSRM for
   real driving-distance/time matrices was implemented and validated correctly
   in isolated testing, but exhibited an intermittent failure in the full
